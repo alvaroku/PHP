@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script
+      src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <form id="loginform" method="post">
+      <div>
+        Nombre:
+        <input type="text" name="nombre" id="nombre" />
+        Apellido:
+        <input type="text" name="apellido" id="apellido" />
+        Edad:
+        <input type="number" name="edad" id="edad" />
+        Id:
+        <input type="number" name="id" id="id" disabled/>
+        <input type="submit" name="loginBtn" id="loginBtn" value="Login" />
+      </div>
+    </form>
+    <section>
+      <div id="contenedor-registros">
+        <h1>Registros</h1>
+        <p id="reg-charge"></p>
+        <table border="1px" id="registros"></table>
+      </div>
+    </section>
+     
+    <script type="text/javascript">
+      var modo = "create"
+      var urlBase = "http://localhost:8080/"
+      //http://localhost:8080/back/controladores/ControladorUsuario.php?modo=read
+      function getUsers() {
+        $.ajax({
+          type: "GET",
+          url: urlBase+"back/controladores/ControladorUsuario.php?modo=read",
+          //data: {id:3},
+          beforeSend: function () {
+            // Declaración
+            $("#reg-charge").html("Cargando...");
+          },
+          complete: function () {
+            // Declaración
+            $("#reg-charge").html("");
+          },
+          error: function () {
+            // Declaración
+            alert("error")
+          },
+          success: function (response) {
+            var jsonData = JSON.parse(response);
+            //console.log(jsonData)
+            if (jsonData.success == "1") {
+              //console.log(jsonData);
+              cadenaDatos = `<thead>
+                  <tr>
+                    <th>id</th>
+                      <th>nombre</th>
+                      <th>apellido</th>
+                      <th>edad</th>
+                      <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>`;
+              jsonData.usuarios.forEach((element) => {
+                cadenaDatos += `<tr>
+                  <td>${element.id}</td>
+                  <td>${element.nombre}</td>
+                  <td>${element.apellido}</td>
+                  <td>${element.edad}</td>
+                  <td><button onclick="deleteUser(${element.id})">Eliminar</button> <button onclick="$('#id').val(${element.id});modo='edit';$('#nombre').val('${element.nombre}');$('#apellido').val('${element.apellido}');$('#edad').val('${element.edad}')">Editar</button></td>
+                </tr>
+                  `;
+                //console.log(element);
+              });
+              cadenaDatos += "</tbody>";
+              $("#registros").html(cadenaDatos);
+            } else {
+              alert("Error de consulta");
+            }
+          },
+        });
+      }
+      function createUser(user) {
+        $.ajax({
+          type: "POST",
+          url: urlBase+"back/controladores/ControladorUsuario.php?modo=create",
+          data: user,
+
+          success: function (response) {
+            var jsonData = JSON.parse(response);
+
+            if (jsonData.success == "1") {
+              getUsers();
+            } else {
+              alert("Invalid Credentials!");
+            }
+          },
+        });
+      }
+      function updateUser(user){
+        $.ajax({
+          type: "POST",
+          url: urlBase+"back/controladores/ControladorUsuario.php?modo=actualizar",
+          data: user,
+
+          success: function (response) {
+            var jsonData = JSON.parse(response);
+
+            if (jsonData.success == "1") {
+              getUsers();
+            } else {
+              alert("Invalid Credentials!");
+            }
+          },
+        });
+      }
+      function getUser(id) {
+        $.ajax({
+          type: "GET",
+          url: "back/getUser.php?id=" + id,
+          //data: {id:3},
+          success: function (response) {
+            var jsonData = JSON.parse(response);
+            //console.log(jsonData)
+            //console.log(jsonData.usuario)
+            if (jsonData.success == "1") {
+              $("#usuario").html(jsonData.usuario.correo);
+            } else {
+              alert("Error de consulta");
+            }
+          },
+        });
+      }
+      function deleteUser(id) {
+        $.ajax({
+          type: "GET",
+          url:urlBase+"back/controladores/ControladorUsuario.php?modo=eliminar&id=" +
+            id,
+          //data: {id:3},
+          success: function (response) {
+            var jsonData = JSON.parse(response);
+            //console.log(jsonData)
+            //console.log(jsonData.usuario)
+            if (jsonData.success == "1") {
+              getUsers();
+            } else {
+              alert("Error de consulta");
+            }
+          },
+        });
+      }
+      
+      function setData(nombre,apellido,edad){
+        alert(nombre)
+        $('#nombre').val(nombre)
+        $('#apellido').val(apellido)
+        $('#edad').val(edad)
+      }
+
+      $(document).ready(function () {
+        getUsers();
+        $("#loginform").submit(function (e) {
+          e.preventDefault();
+          user = { nombre: $('#nombre').val(), apellido: $('#apellido').val(), edad:$('#edad').val(),id:$('#id').val() }
+          if(modo == "create"){
+            createUser(user);
+          }else{
+            updateUser(user);
+            modo = "create";
+          }
+          
+          $('#nombre').val("")
+          $('#apellido').val("")
+          $('#edad').val("")
+          $('#id').val("")
+        });
+      });
+    </script>
+  </body>
+</html>
