@@ -6,37 +6,72 @@
       integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
       crossorigin="anonymous"
     ></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
   </head>
   <body>
-    <form id="loginform" method="post">
-      <div>
-        Nombre:
-        <input type="text" name="nombre" id="nombre" />
-        Apellido:
-        <input type="text" name="apellido" id="apellido" />
-        Edad:
-        <input type="number" name="edad" id="edad" />
-        Id:
-        <input type="number" name="id" id="id" disabled/>
-        <input type="submit" name="loginBtn" id="loginBtn" value="Login" />
-      </div>
-    </form>
-    <section>
-      <div id="contenedor-registros">
-        <h1>Registros</h1>
-        <p id="reg-charge"></p>
-        <table border="1px" id="registros"></table>
-      </div>
-    </section>
-     
+    <main class="container">
+      <section>
+        <form id="loginform" method="post">
+          <div>
+            <label for="nombre">Nombre:</label>
+            <input class="form-control" type="text" name="nombre" id="nombre" />
+          </div>
+          <div>
+            <label for="apellido">Apellido:</label>
+            <input
+              class="form-control"
+              type="text"
+              name="apellido"
+              id="apellido"
+            />
+          </div>
+          <div>
+            <label for="edad">Edad:</label>
+            <input class="form-control" type="number" name="edad" id="edad" />
+          </div>
+          <div>
+            <label for="id">Id:</label>
+            <input
+              class="form-control"
+              type="number"
+              name="id"
+              id="id"
+              disabled
+            />
+          </div>
+          <input
+            class="form-control btn btn-primary"
+            type="submit"
+            name="loginBtn"
+            id="loginBtn"
+            value="Save"
+          />
+        </form>
+      </section>
+
+      <section>
+        <div id="contenedor-registros">
+          <h1>Registros</h1>
+          <p id="reg-charge"></p>
+          <table class="table" id="registros"></table>
+        </div>
+      </section>
+    </main>
+
     <script type="text/javascript">
-      var modo = "create"
-      var urlBase = "http://localhost:8080/"
+      var modo = "create";
+      var urlBase = "http://localhost:8080/";
       //http://localhost:8080/back/controladores/ControladorUsuario.php?modo=read
       function getUsers() {
         $.ajax({
           type: "GET",
-          url: urlBase+"back/controladores/ControladorUsuario.php?modo=read",
+          url: urlBase + "back/controladores/ControladorUsuario.php?modo=read",
           //data: {id:3},
           beforeSend: function () {
             // Declaración
@@ -48,7 +83,7 @@
           },
           error: function () {
             // Declaración
-            alert("error")
+            alert("error");
           },
           success: function (response) {
             var jsonData = JSON.parse(response);
@@ -67,11 +102,14 @@
                 <tbody>`;
               jsonData.usuarios.forEach((element) => {
                 cadenaDatos += `<tr>
-                  <td>${element.id}</td>
+                  <th scope="row">${element.id}</th>
                   <td>${element.nombre}</td>
                   <td>${element.apellido}</td>
                   <td>${element.edad}</td>
-                  <td><button onclick="deleteUser(${element.id})">Eliminar</button> <button onclick="$('#id').val(${element.id});modo='edit';$('#nombre').val('${element.nombre}');$('#apellido').val('${element.apellido}');$('#edad').val('${element.edad}')">Editar</button></td>
+                  <td>
+                    <button class="btn btn-warning" onclick="$('#id').val(${element.id});modo='edit';$('#nombre').val('${element.nombre}');$('#apellido').val('${element.apellido}');$('#edad').val('${element.edad}')">Editar</button>
+                    <button class="btn btn-danger" onclick="deleteUser(${element.id})">Eliminar</button>
+                  </td>
                 </tr>
                   `;
                 //console.log(element);
@@ -87,7 +125,8 @@
       function createUser(user) {
         $.ajax({
           type: "POST",
-          url: urlBase+"back/controladores/ControladorUsuario.php?modo=create",
+          url:
+            urlBase + "back/controladores/ControladorUsuario.php?modo=create",
           data: user,
 
           success: function (response) {
@@ -95,22 +134,28 @@
 
             if (jsonData.success == "1") {
               getUsers();
+              swal("Usuario agregado!", ":)", "success");
             } else {
               alert("Invalid Credentials!");
             }
           },
         });
       }
-      function updateUser(user){
+      function updateUser(user) {
         $.ajax({
           type: "POST",
-          url: urlBase+"back/controladores/ControladorUsuario.php?modo=actualizar",
+          url:
+            urlBase +
+            "back/controladores/ControladorUsuario.php?modo=actualizar",
           data: user,
 
           success: function (response) {
             var jsonData = JSON.parse(response);
 
             if (jsonData.success == "1") {
+              swal("Datos actualizados", {
+              icon: "success",
+            });
               getUsers();
             } else {
               alert("Invalid Credentials!");
@@ -136,9 +181,19 @@
         });
       }
       function deleteUser(id) {
-        $.ajax({
+        swal({
+          title: "Seguro de eliminar?",
+          text: "Este cambio no se puede deshacer!",
+          icon: "warning",
+          buttons: true,
+          dangerMode: true,
+        }).then((willDelete) => {
+          if (willDelete) {
+            $.ajax({
           type: "GET",
-          url:urlBase+"back/controladores/ControladorUsuario.php?modo=eliminar&id=" +
+          url:
+            urlBase +
+            "back/controladores/ControladorUsuario.php?modo=eliminar&id=" +
             id,
           //data: {id:3},
           success: function (response) {
@@ -146,37 +201,48 @@
             //console.log(jsonData)
             //console.log(jsonData.usuario)
             if (jsonData.success == "1") {
+              swal("Usuario eliminado", {
+              icon: "success",
+            });
               getUsers();
             } else {
               alert("Error de consulta");
             }
           },
         });
+          }
+        });
+        
       }
-      
-      function setData(nombre,apellido,edad){
-        alert(nombre)
-        $('#nombre').val(nombre)
-        $('#apellido').val(apellido)
-        $('#edad').val(edad)
+
+      function setData(nombre, apellido, edad) {
+        alert(nombre);
+        $("#nombre").val(nombre);
+        $("#apellido").val(apellido);
+        $("#edad").val(edad);
       }
 
       $(document).ready(function () {
         getUsers();
         $("#loginform").submit(function (e) {
           e.preventDefault();
-          user = { nombre: $('#nombre').val(), apellido: $('#apellido').val(), edad:$('#edad').val(),id:$('#id').val() }
-          if(modo == "create"){
+          user = {
+            nombre: $("#nombre").val(),
+            apellido: $("#apellido").val(),
+            edad: $("#edad").val(),
+            id: $("#id").val(),
+          };
+          if (modo == "create") {
             createUser(user);
-          }else{
+          } else {
             updateUser(user);
             modo = "create";
           }
-          
-          $('#nombre').val("")
-          $('#apellido').val("")
-          $('#edad').val("")
-          $('#id').val("")
+
+          $("#nombre").val("");
+          $("#apellido").val("");
+          $("#edad").val("");
+          $("#id").val("");
         });
       });
     </script>
