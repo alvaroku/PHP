@@ -16,8 +16,9 @@
   </head>
   <body>
     <main class="container">
-      <section>
-        <form id="loginform" method="post">
+      <section class="row">
+        <div class="col-md-3 col-lg-4"></div>
+        <form class="col-sm-12 col-md-6 col-lg-4" id="loginform" method="post">
           <div>
             <label for="nombre">Nombre:</label>
             <input class="form-control" type="text" name="nombre" id="nombre" />
@@ -49,24 +50,27 @@
             class="form-control btn btn-primary"
             type="submit"
             name="loginBtn"
-            id="loginBtn"
-            value="Save"
+            id="btnForm"
+            value="Registrar"
           />
         </form>
+        <div class="col-md-3 col-lg-4"></div>
       </section>
 
-      <section>
-        <div id="contenedor-registros">
+      <section class="row">
+        <div class="col-md-2 col-lg-2"></div>
+        <div class="col-sm-12 col-md-8 col-lg-8" id="contenedor-registros">
           <h1>Registros</h1>
           <p id="reg-charge"></p>
           <table class="table" id="registros"></table>
         </div>
+        <div class="col-md-2 col-lg-2"></div>
       </section>
     </main>
 
     <script type="text/javascript">
       var modo = "create";
-      var urlBase = "http://localhost:8080/";
+      var urlBase = window.location.href + "/";
       //http://localhost:8080/back/controladores/ControladorUsuario.php?modo=read
       function getUsers() {
         $.ajax({
@@ -81,9 +85,9 @@
             // Declaración
             $("#reg-charge").html("");
           },
-          error: function () {
+          error: function (e) {
             // Declaración
-            alert("error");
+            swal("Error al obtener datos!", e, "error");
           },
           success: function (response) {
             var jsonData = JSON.parse(response);
@@ -107,7 +111,7 @@
                   <td>${element.apellido}</td>
                   <td>${element.edad}</td>
                   <td>
-                    <button class="btn btn-warning" onclick="$('#id').val(${element.id});modo='edit';$('#nombre').val('${element.nombre}');$('#apellido').val('${element.apellido}');$('#edad').val('${element.edad}')">Editar</button>
+                    <button class="btn btn-warning" onclick="changeText('btnForm','Guardar');$('#id').val(${element.id});modo='edit';$('#nombre').val('${element.nombre}');$('#apellido').val('${element.apellido}');$('#edad').val('${element.edad}')">Editar</button>
                     <button class="btn btn-danger" onclick="deleteUser(${element.id})">Eliminar</button>
                   </td>
                 </tr>
@@ -154,8 +158,8 @@
 
             if (jsonData.success == "1") {
               swal("Datos actualizados", {
-              icon: "success",
-            });
+                icon: "success",
+              });
               getUsers();
             } else {
               alert("Invalid Credentials!");
@@ -163,17 +167,18 @@
           },
         });
       }
-      function getUser(id) {
+      function getUser(id=3092) {
         $.ajax({
           type: "GET",
-          url: "back/getUser.php?id=" + id,
+          url: urlBase+"back/getUser.php?id=" + id,
           //data: {id:3},
           success: function (response) {
             var jsonData = JSON.parse(response);
             //console.log(jsonData)
             //console.log(jsonData.usuario)
             if (jsonData.success == "1") {
-              $("#usuario").html(jsonData.usuario.correo);
+              dato = jsonData;
+              //$("#usuario").html(jsonData.usuario.correo);
             } else {
               alert("Error de consulta");
             }
@@ -190,29 +195,31 @@
         }).then((willDelete) => {
           if (willDelete) {
             $.ajax({
-          type: "GET",
-          url:
-            urlBase +
-            "back/controladores/ControladorUsuario.php?modo=eliminar&id=" +
-            id,
-          //data: {id:3},
-          success: function (response) {
-            var jsonData = JSON.parse(response);
-            //console.log(jsonData)
-            //console.log(jsonData.usuario)
-            if (jsonData.success == "1") {
-              swal("Usuario eliminado", {
-              icon: "success",
+              type: "GET",
+              url:
+                urlBase +
+                "back/controladores/ControladorUsuario.php?modo=eliminar&id=" +
+                id,
+              //data: {id:3},
+              success: function (response) {
+                var jsonData = JSON.parse(response);
+                //console.log(jsonData)
+                //console.log(jsonData.usuario)
+                if (jsonData.success == "1") {
+                  changeText("btnForm", "Registrar");
+                  resetElements();
+                  modo == "create"
+                  swal("Usuario eliminado", {
+                    icon: "success",
+                  });
+                  getUsers();
+                } else {
+                  alert("Error de consulta");
+                }
+              },
             });
-              getUsers();
-            } else {
-              alert("Error de consulta");
-            }
-          },
-        });
           }
         });
-        
       }
 
       function setData(nombre, apellido, edad) {
@@ -226,25 +233,47 @@
         getUsers();
         $("#loginform").submit(function (e) {
           e.preventDefault();
+          let errosInfo = "";
           user = {
             nombre: $("#nombre").val(),
             apellido: $("#apellido").val(),
             edad: $("#edad").val(),
             id: $("#id").val(),
           };
+
+          if (!user.nombre) {
+            errosInfo += "Debe ingresar el dato Nombre\n";
+          }
+          if (!user.apellido) {
+            errosInfo += "Debe ingresar el dato Apellido\n";
+          }
+          if (!user.edad) {
+            errosInfo += "Debe ingresar el dato Edad\n";
+          }
+          if (errosInfo != "") {
+            swal("Verificar los siguentes datos", errosInfo + "", "error");
+            return false;
+          }
+
           if (modo == "create") {
             createUser(user);
           } else {
             updateUser(user);
             modo = "create";
+            changeText("btnForm", "Registrar");
           }
-
-          $("#nombre").val("");
-          $("#apellido").val("");
-          $("#edad").val("");
-          $("#id").val("");
+          resetElements();
         });
       });
+      function resetElements() {
+        $("#nombre").val("");
+        $("#apellido").val("");
+        $("#edad").val("");
+        $("#id").val("");
+      }
+      function changeText(element, value) {
+        $("#" + element).val(value);
+      }
     </script>
   </body>
 </html>
